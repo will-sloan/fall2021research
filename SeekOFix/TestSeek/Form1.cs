@@ -34,7 +34,7 @@ using AForge.Imaging.Filters;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Globalization;
-
+using System.Diagnostics;
 namespace TestSeek
 {
     public partial class Form1 : Form
@@ -90,25 +90,38 @@ namespace TestSeek
         Crop cropFilter = new Crop(new Rectangle(0, 0, 206, 156));
         Sharpen sfilter = new Sharpen();
 
+        bool willsFlag = true;
+        int mycounter = 0;
+
         public Form1()
         {
             InitializeComponent();
 
             localPath = Directory.GetCurrentDirectory().ToString();
+
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            Trace.AutoFlush = true;
+            Trace.WriteLine("Entering Main");
+            Trace.WriteLine("Path of: " + localPath);
             Directory.CreateDirectory(localPath+@"\export");
 
+            // Handle changing the temperature if you click on of the radio buttons
             rbUnitsK.CheckedChanged += new EventHandler(radioButtons_CheckedChanged);
             rbUnitsC.CheckedChanged += new EventHandler(radioButtons_CheckedChanged);
             rbUnitsF.CheckedChanged += new EventHandler(radioButtons_CheckedChanged);
 
+            // Grabs the SeekThermal Camera if it can
             var device = SeekThermal.Enumerate().FirstOrDefault();
             if(device == null)
             {
                 MessageBox.Show("No Seek Thermal devices found.");
                 return;
             }
+
+            // Create the thermal camera
             thermal = new SeekThermal(device);
 
+            // Start a process to handle the camera, so buttons can still be used
             thermalThread = new Thread(ThermalThreadProc);
             thermalThread.IsBackground = true;
             thermalThread.Start();
@@ -116,12 +129,17 @@ namespace TestSeek
 
         void ThermalThreadProc()
         {
+            Trace.WriteLine("Starting Thermal Thread");
+            bool willsflag = true;
             while (!stopThread && thermal != null)
             {
                 bool progress = false;
-
+                
                 currentFrame = thermal.GetFrameBlocking();
-
+                //if (willsflag)
+                //{
+                //    Console.WriteLine("CurrentFrame status byte: " + currentFrame.StatusByte);
+                //}
                 switch (currentFrame.StatusByte)
                 {
                     case 4://gain calibration
@@ -158,6 +176,8 @@ namespace TestSeek
                 {
                     Invalidate();//redraw form
                 }
+                // Done first loop so don't do debugging things that only run once
+                willsflag = true;
             }
         }
 
@@ -604,6 +624,7 @@ namespace TestSeek
 
         private string rawToTemp(int val)
         {
+            Console.WriteLine("THE VALUE: " + val);
             double tempVal = 0;
 
             tempVal = (double)(val - 5950) / 40 + 273.15;//K
@@ -637,9 +658,12 @@ namespace TestSeek
         {
             if (lastUsableFrame != null)
             {
+                Console.WriteLine("TOP");
+                Console.WriteLine("gModeLeft: " + gModeLeft + " gModeRight: " + gModeRight);
                 string minTemp = rawToTemp(gModeLeft);
                 string maxTemp = rawToTemp(gModeRight);
-
+                Console.WriteLine("minTemp: " + minTemp + " maxTemp: " + maxTemp);
+                Console.WriteLine("BOTTOM");
                 lblSliderMin.Text = minTemp;
                 lblSliderMax.Text = maxTemp;
                 lblMinTemp.Text = minTemp;
