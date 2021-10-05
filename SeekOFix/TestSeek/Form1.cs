@@ -35,7 +35,6 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Diagnostics;
-using FileHelpers;
 
 namespace TestSeek
 {
