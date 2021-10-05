@@ -51,23 +51,47 @@ namespace winusbdotnet.UsbDevices
         public readonly UInt16 StatusWord;
         public readonly UInt16 AvgValue;
 
+        bool willsFlag = true;
+        int counter = 0;
+
         internal ThermalFrame(Byte[] data)
         {
             Width = 208;
             Height = 156;
+            // Data contains the output of the image, except the data looks like:
+            // [180,180,26,26,214,214,24,24]
+            // So obviously we only want every second index.
+            // This turns the data length from 64896 --> 32448
+            // 32448 = 208 * 156
+            // So this fits the size of the output image. 
             RawData = data;
             StatusByte = data[20];
 
+            // In each frame, at index 20 is the statusbyte. 
+            // 1 --> shutter calibration
+            // 3 --> normal camera frame
+            // 4 --> Gain calibration
             IsCalibrationFrame = StatusByte == 1;
             IsUsableFrame = StatusByte == 3;
 
             // Convert to 16 bit as well for easier manipulation of data.
             RawDataU16 = new UInt16[data.Length / 2];
-
+            //System.Diagnostics.Debug.WriteLine("Data length: " + data.Length);
+            //for (int i=0; i<20; i++)
+            //{
+            //    System.Diagnostics.Debug.WriteLine("Data @" + i + ": " + data[i]);
+            //}
             for (int i = 0; i < (data.Length / 2); i++)
             {
                 UInt16 v = (UInt16)BitConverter.ToInt16(data, i * 2);
                 RawDataU16[i] = v;
+                //if (counter < 10)
+                //{
+                //    System.Diagnostics.Debug.WriteLine("From fram internal: " + v);
+                //    System.Diagnostics.Debug.WriteLine("From from internal: " + data[i*2]);
+                //    willsFlag = false;
+                //    counter++;
+                //}
             }
 
         }

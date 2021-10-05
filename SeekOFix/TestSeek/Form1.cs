@@ -35,6 +35,8 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Diagnostics;
+using FileHelpers;
+
 namespace TestSeek
 {
     public partial class Form1 : Form
@@ -58,14 +60,23 @@ namespace TestSeek
 		
 		ushort[] arrID4 = new ushort[32448];
         ushort[] arrID1 = new ushort[32448];
+
+        // arrID3 stores the actual images before converted to RGB
+        // Numbers ~6000
         ushort[] arrID3 = new ushort[32448];
 		
 		bool[] badPixelArr = new bool[32448];
 
         ushort[] gMode = new ushort[1000];
 
+        // 1001 is the length of the image in palette (widthxheight would be 1001x1)
         ushort[,] palleteArr = new ushort[1001,3];//-> ushort
-		
+
+        // Contains the RGB (between 0 and 255) values for each pixel. 
+        // 156 * 208 = 32448
+        // 32448 * 3 = 97344
+        // 208 --> width
+        // 156 --> height
         byte[] imgBuffer = new byte[97344];
 		
         ushort gModePeakIx = 0;
@@ -90,6 +101,10 @@ namespace TestSeek
         Crop cropFilter = new Crop(new Rectangle(0, 0, 206, 156));
         Sharpen sfilter = new Sharpen();
 
+        // Used to enable writing the heat values to a csv file
+        bool writeCSV = false;
+
+        // Variables I use for testing various things
         bool willsFlag = true;
         int mycounter = 0;
 
@@ -129,8 +144,8 @@ namespace TestSeek
 
         void ThermalThreadProc()
         {
-            Trace.WriteLine("Starting Thermal Thread");
-            bool willsflag = true;
+            //Trace.WriteLine("Starting Thermal Thread");
+            //bool willsflag = true;
             while (!stopThread && thermal != null)
             {
                 bool progress = false;
@@ -177,7 +192,7 @@ namespace TestSeek
                     Invalidate();//redraw form
                 }
                 // Done first loop so don't do debugging things that only run once
-                willsflag = true;
+                //willsflag = true;
             }
         }
 
@@ -208,6 +223,16 @@ namespace TestSeek
         {
             arrID3 = currentFrame.RawDataU16;
 
+            //System.Diagnostics.Debug.WriteLine("BEFORE THE STUFF I WANT");
+            //for (int i = 0; i < 50; i++)
+            //{
+            //    System.Diagnostics.Debug.Write(arrID3[i] + " " + (ushort)((arrID3[i] - arrID1[i]) * gainCalArr[i] + 7500) + "! ");
+            //}
+            //System.Diagnostics.Debug.Write("\n");
+
+            // Does some form of calibration, seems to use the other 3 arrays of calibration values
+            // Would not doing the calibration be better or worse?
+            // Answer: its a lot worse as the quality becomes very poor without it. 
             for (int i = 0; i < 32448; i++)
             {
                 if (arrID3[i] > 2000)
@@ -220,6 +245,13 @@ namespace TestSeek
                     badPixelArr[i] = true;
                 }
             }
+
+            //System.Diagnostics.Debug.WriteLine("NEW THE STUFF I WANT");
+            //for (int i = 0; i < 50; i++)
+            //{
+            //    System.Diagnostics.Debug.Write(arrID3[i] + " ");
+            //}
+            //System.Diagnostics.Debug.Write("\n");
 
             fixBadPixels();
 			removeNoise();
@@ -243,6 +275,9 @@ namespace TestSeek
                 v = (ushort)(v - gModeLeft);
                 loc = (ushort)(v / iScaler);
 
+                // Set the rgb values of the each pixel
+                // Uses loc and v to get which RGB value it should be from the pallete
+                // I think they are scaled between 0 and 1001
                 imgBuffer[i*3] = (byte)palleteArr[loc, 2];
                 imgBuffer[i*3+1] = (byte)palleteArr[loc, 1];
                 imgBuffer[i*3+2] = (byte)palleteArr[loc, 0];
@@ -486,6 +521,8 @@ namespace TestSeek
 
         private void cbPal_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // This is the pallette drop down menu handler
+            // It loads an image from TestSeek/palette/ based on what drop down item you picked
             ComboItem newPal = (ComboItem)cbPal.SelectedItem;
             Bitmap paletteImg = new Bitmap(newPal.Key);
             Color picColor;
@@ -624,7 +661,7 @@ namespace TestSeek
 
         private string rawToTemp(int val)
         {
-            Console.WriteLine("THE VALUE: " + val);
+            //Console.WriteLine("THE VALUE: " + val);
             double tempVal = 0;
 
             tempVal = (double)(val - 5950) / 40 + 273.15;//K
@@ -656,6 +693,9 @@ namespace TestSeek
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
+            // This runs for each new frame, althrough some frame can be for calibration. 
+            // The bitmap output of this function has a few things applied to it so saving arrID3 might be better. 
+            // So this will created a CSV? 
             if (lastUsableFrame != null)
             {
                 Console.WriteLine("TOP");
@@ -680,6 +720,38 @@ namespace TestSeek
                 }
 
                 bitmap_data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb);
+
+                // Gives values between 0 to 255
+                //if (willsFlag == true)
+                //{
+                //    System.Diagnostics.Debug.WriteLine("IMG BUFFER");
+                //    for (int i=0; i<1000; i++)
+                //    {
+                //        System.Diagnostics.Debug.Write(imgBuffer[i] + " ");
+                //    }
+                //    System.Diagnostics.Debug.WriteLine("");
+                //}
+
+                // IMG buffer has the RGB values for each pixel.
+                // This converts the 97344 array into a 32448*3 array for the 208*156 image
+                if (writeCSV)
+                {
+                    string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
+                    using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
+                    {
+                        // 207 * 156 + 156 = 32448
+                        // Since this loads 156 past the last index, we don't include 208
+                        for (int i=0; i<208; i++)
+                        {
+                            // new ArraySegment<ushort>(array, start_index, number_of_items_including_start)
+                            file.WriteLine(string.Join(",", new ArraySegment<ushort>(arrID3, i * 156, 156)));
+                        }
+                        
+                    }
+                    //willsFlag = false;
+                }
+                
+
                 Marshal.Copy(imgBuffer, 0, bitmap_data.Scan0, imgBuffer.Length);
                 bitmap.UnlockBits(bitmap_data);
 
