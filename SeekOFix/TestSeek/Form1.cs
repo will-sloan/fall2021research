@@ -48,6 +48,7 @@ namespace TestSeek
         bool grabExternalReference = false;
 		bool firstAfterCal = false;
         bool usignExternalCal = false;
+        // Used to enable saving the raw files found under: SeekOFix\TestSeek\bin\Debug\export
         bool autoSaveImg = false;
         bool autoRange = true;
         bool dynSliders = false;
@@ -100,8 +101,7 @@ namespace TestSeek
         Crop cropFilter = new Crop(new Rectangle(0, 0, 206, 156));
         Sharpen sfilter = new Sharpen();
 
-        // Used to enable writing the heat values to a csv file
-        bool writeCSV = false;
+        
 
         // Variables I use for testing various things
         bool willsFlag = true;
@@ -113,11 +113,11 @@ namespace TestSeek
 
             localPath = Directory.GetCurrentDirectory().ToString();
 
-            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            Trace.AutoFlush = true;
-            Trace.WriteLine("Entering Main");
-            Trace.WriteLine("Path of: " + localPath);
-            Directory.CreateDirectory(localPath+@"\export");
+            //Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            //Trace.AutoFlush = true;
+            //Trace.WriteLine("Entering Main");
+            //Trace.WriteLine("Path of: " + localPath);
+            //Directory.CreateDirectory(localPath+@"\export");
 
             // Handle changing the temperature if you click on of the radio buttons
             rbUnitsK.CheckedChanged += new EventHandler(radioButtons_CheckedChanged);
@@ -660,6 +660,8 @@ namespace TestSeek
 
         private string rawToTemp(int val)
         {
+            // Takes the top and bottom raw data values and converts to temperature. 
+            // Value will be around 7000
             //Console.WriteLine("THE VALUE: " + val);
             double tempVal = 0;
 
@@ -697,12 +699,12 @@ namespace TestSeek
             // So this will created a CSV? 
             if (lastUsableFrame != null)
             {
-                Console.WriteLine("TOP");
-                Console.WriteLine("gModeLeft: " + gModeLeft + " gModeRight: " + gModeRight);
+                //Console.WriteLine("TOP");
+                //Console.WriteLine("gModeLeft: " + gModeLeft + " gModeRight: " + gModeRight);
                 string minTemp = rawToTemp(gModeLeft);
                 string maxTemp = rawToTemp(gModeRight);
-                Console.WriteLine("minTemp: " + minTemp + " maxTemp: " + maxTemp);
-                Console.WriteLine("BOTTOM");
+                //Console.WriteLine("minTemp: " + minTemp + " maxTemp: " + maxTemp);
+                //Console.WriteLine("BOTTOM");
                 lblSliderMin.Text = minTemp;
                 lblSliderMax.Text = maxTemp;
                 lblMinTemp.Text = minTemp;
@@ -733,17 +735,22 @@ namespace TestSeek
 
                 // IMG buffer has the RGB values for each pixel.
                 // This converts the 97344 array into a 32448*3 array for the 208*156 image
-                if (writeCSV)
+
+                // Clicking `Auto Save` will enable writing output
+                if (autoSaveImg)
                 {
                     string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
                     using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
                     {
-                        // 207 * 156 + 156 = 32448
-                        // Since this loads 156 past the last index, we don't include 208
-                        for (int i=0; i<208; i++)
+                        // 156 --> height
+                        // 208 --> width
+                        // 155 * 208 + 208 = 32448
+                        // Each row is 208 long, so we don't include the last index
+                        for (int i=0; i<156; i++)
                         {
+                            // Since we want to save a 1D array as a "2D" csv file, we have to take segements of the file equal to the image width
                             // new ArraySegment<ushort>(array, start_index, number_of_items_including_start)
-                            file.WriteLine(string.Join(",", new ArraySegment<ushort>(arrID3, i * 156, 156)));
+                            file.WriteLine(string.Join(",", new ArraySegment<ushort>(arrID3, i * 208, 208)));
                         }
                         
                     }
@@ -769,7 +776,7 @@ namespace TestSeek
                 {
                     firstAfterCal = false;
                     pictureBox5.Image = bigBitmap;
-                    if (autoSaveImg) bigBitmap.Save(localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".png");
+                    //if (autoSaveImg) bigBitmap.Save(localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".png");
                 }
 
                 DrawHistogram();
