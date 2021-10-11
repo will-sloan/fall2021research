@@ -1,0 +1,64 @@
+{
+  "name": "car-data-collection",
+  "main": "public/electron.js",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "bootstrap": "5.1.1",
+    "cross-env": "^7.0.3",
+    "react": "^17.0.2",
+    "react-bootstrap": "^2.0.0-rc.0",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "react-webcam": "^6.0.0",
+    "web-vitals": "^1.0.1"
+  },
+  "scripts": {
+    "react-start": "react-scripts start",
+    "electron-start": "wait-on http://localhost:3006 && electron .",
+    "react-build": "react-scripts build",
+    "react-test": "react-scripts test --env=jsdom",
+    "react-eject": "react-scripts eject",
+    "electron-build": "electron-builder",
+    "package": "yarn react-build && electron-builder --publish=never",
+    "build": "yarn react-build && yarn electron-build",
+    "dev": "concurrently -k \"cross-env PORT=3006 BROWSER=none yarn react-start\" \"yarn electron-start\""
+  },
+  "build": {
+    "appId": "Discite",
+    "asar": true,
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "src/utils",
+      "src/scripts"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "concurrently": "^6.3.0",
+    "electron": "^15.1.2",
+    "electron-is-dev": "^2.0.0",
+    "wait-on": "^6.0.0"
+  }
+}
