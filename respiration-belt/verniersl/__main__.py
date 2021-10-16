@@ -192,7 +192,11 @@ class Outlet(threading.Thread):
                     # Respiration rate gets updated every 10 seconds
                     # if not math.isnan(chunk[1]):
                     #     print(datetime.datetime.now(), chunk)
-                    output = f"{datetime.datetime.now()}, {chunk[0]}, {chunk[1]}\n"
+
+                    # We want to write the unix timestamp of every measurement
+                    output = f"{int(time.time())}, {chunk[0]}, {chunk[1]}\n"
+                    # Old version of a normal time stamp
+                    # output = f"{datetime.datetime.now()}, {chunk[0]}, {chunk[1]}\n"
                     f.write(output)
 
                     # print()
