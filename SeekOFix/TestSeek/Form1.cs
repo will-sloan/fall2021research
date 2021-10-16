@@ -739,7 +739,12 @@ namespace TestSeek
                 // Clicking `Auto Save` will enable writing output
                 if (autoSaveImg)
                 {
-                    string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
+                    // Name file the unix time stamp 
+                    DateTime foo = DateTime.Now;
+                    long unixTime = ((System.DateTimeOffset)foo).ToUnixTimeSeconds();
+                    string fileName = localPath + @"\export\seek_" + unixTime.ToString() + ".txt";
+                    //string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
+                    //System.Diagnostics.Debug.WriteLine(unixTime);
                     using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
                     {
                         // 156 --> height
