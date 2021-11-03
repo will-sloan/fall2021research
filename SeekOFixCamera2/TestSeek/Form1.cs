@@ -132,22 +132,23 @@ namespace TestSeek
                 //System.Diagnostics.Debug.WriteLine("DEVICE: " + d.ToString());
 
                 // We want to find the first camera
-                if (d.ToString().Equals(camera1))
+                //if (d.ToString().Equals(camera1))
+                //{
+                //    Debug.WriteLine("Found camera 1");
+                //}
+                if (d.ToString().Equals(camera2))
                 {
-                    Debug.WriteLine("Found camera 1");
+                    Debug.WriteLine("Found camera 2");
                     device = d;
                 }
-                //else if (d.ToString().Equals(camera2))
-                //{
-                //    Debug.WriteLine("Found camera 2");
-                //}
             }
 
             // Grabs the SeekThermal Camera if it can
             //var device = SeekThermal.Enumerate().FirstOrDefault();
-            
 
-            if(device == null)
+
+
+            if (device == null)
             {
                 MessageBox.Show("No Seek Thermal devices found.");
                 return;
@@ -763,7 +764,7 @@ namespace TestSeek
                     // Name file the unix time stamp 
                     DateTime foo = DateTime.Now;
                     long unixTime = ((System.DateTimeOffset)foo).ToUnixTimeSeconds();
-                    string fileName = localPath + @"\export\camera1\seek_c1_" + unixTime.ToString() + ".txt";
+                    string fileName = localPath + @"\export\camera2\seek_c2_" + unixTime.ToString() + ".txt";
                     //string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
                     //System.Diagnostics.Debug.WriteLine(unixTime);
                     using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
