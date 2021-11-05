@@ -3,12 +3,15 @@
   "main": "public/electron.js",
   "version": "0.1.0",
   "private": true,
+  "author": "Tom Sloan",
+  "homepage": "./",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "bootstrap": "5.1.1",
     "cross-env": "^7.0.3",
+    "electron-is-dev": "^2.0.0",
     "react": "^17.0.2",
     "react-bootstrap": "^2.0.0-rc.0",
     "react-dom": "^17.0.2",
@@ -28,7 +31,7 @@
     "dev": "concurrently -k \"cross-env PORT=3006 BROWSER=none yarn react-start\" \"yarn electron-start\""
   },
   "build": {
-    "appId": "Discite",
+    "appId": "Car Cam",
     "asar": true,
     "files": [
       "build/**/*",
@@ -58,7 +61,7 @@
   "devDependencies": {
     "concurrently": "^6.3.0",
     "electron": "^15.1.2",
-    "electron-is-dev": "^2.0.0",
+    "electron-builder": "^22.13.1",
     "wait-on": "^6.0.0"
   }
 }

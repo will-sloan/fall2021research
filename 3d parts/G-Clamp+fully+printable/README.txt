@@ -1,0 +1,1 @@
+G-Clamp fully printable by johann517 on Thingiverse: https://www.thingiverse.com/thing:1673030

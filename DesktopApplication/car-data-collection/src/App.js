@@ -46,7 +46,7 @@ function App() {
 
   const handleStartCaptureClick = useCallback(() => {
     mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
-      mimeType: "video/webm",
+      mimeType: "video/x-matroska;codecs:H.264",
     });
     mediaRecorderRef.current.addEventListener(
       "dataavailable",
@@ -54,7 +54,7 @@ function App() {
     );
     mediaRecorderRef.current.start();
     mediaRecorderRef2.current = new MediaRecorder(webcamRef2.current.stream, {
-      mimeType: "video/webm",
+      mimeType: "video/x-matroska;codecs:H.264",
     });
     mediaRecorderRef2.current.addEventListener(
       "dataavailable",
@@ -62,6 +62,40 @@ function App() {
     );
     mediaRecorderRef2.current.start();
   }, [webcamRef, mediaRecorderRef, mediaRecorderRef2, webcamRef2]);
+
+  function getAllSupportedMimeTypes(...mediaTypes) {
+    if (!mediaTypes.length) mediaTypes.push(...["video", "audio"]);
+    const FILE_EXTENSIONS = ["webm", "ogg", "mp4", "x-matroska"];
+    const CODECS = [
+      "vp9",
+      "vp9.0",
+      "vp8",
+      "vp8.0",
+      "avc1",
+      "av1",
+      "h265",
+      "h.265",
+      "h264",
+      "h.264",
+      "opus",
+    ];
+
+    return [
+      ...new Set(
+        FILE_EXTENSIONS.flatMap((ext) =>
+          CODECS.flatMap((codec) =>
+            mediaTypes.flatMap((mediaType) => [
+              `${mediaType}/${ext};codecs:${codec}`,
+              `${mediaType}/${ext};codecs=${codec}`,
+              `${mediaType}/${ext};codecs:${codec.toUpperCase()}`,
+              `${mediaType}/${ext};codecs=${codec.toUpperCase()}`,
+              `${mediaType}/${ext}`,
+            ])
+          )
+        )
+      ),
+    ].filter((variation) => MediaRecorder.isTypeSupported(variation));
+  }
 
   const handleDataAvailable = useCallback(
     ({ data }) => {
@@ -87,31 +121,31 @@ function App() {
   }, [mediaRecorderRef, webcamRef, mediaRecorderRef2, webcamRef2]);
 
   const handleDownload = useCallback(() => {
-    console.log("downloading", typeof recordedChunks);
+    console.log("downloading ", recordedChunks.length);
     if (recordedChunks.length) {
       const blob = new Blob(recordedChunks, {
-        type: "video/webm",
+        type: "video/x-matroska;codecs:H.264",
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       document.body.appendChild(a);
       a.style = "display: none";
       a.href = url;
-      a.download = Date.now() + "aPillarCameraRecording" + ".webm";
+      a.download = Date.now() + "aPillarCameraRecording" + ".mkv";
       a.click();
       window.URL.revokeObjectURL(url);
       setRecordedChunks([]);
     }
     if (recordedChunks2.length) {
       const blob = new Blob(recordedChunks2, {
-        type: "video/webm",
+        type: "video/x-matroska;codecs:H.264",
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       document.body.appendChild(a);
       a.style = "display: none";
       a.href = url;
-      a.download = Date.now() + "mirrorCameraRecording" + ".webm";
+      a.download = Date.now() + "mirrorCameraRecording" + ".mkv";
       a.click();
       window.URL.revokeObjectURL(url);
       setRecordedChunks([]);
