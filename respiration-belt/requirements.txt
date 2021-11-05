@@ -1,0 +1,2 @@
+godirect[usb,ble]
+pylsl
