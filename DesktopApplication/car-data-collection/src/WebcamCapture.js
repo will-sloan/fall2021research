@@ -2,10 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
-import Button from "react-bootstrap/Button";
 import styles from "./app.module.css";
 
-export const WebcamCapture = ({ webcamRef }) => {
+export const WebcamCapture = ({ webcamRef, index }) => {
   const [devices, setDevices] = useState([]);
   const [displaySelected, setDisplaySelected] = useState(0);
 
@@ -18,13 +17,17 @@ export const WebcamCapture = ({ webcamRef }) => {
         setDisplaySelected={setDisplaySelected}
       />
       {devices && devices.length > 0 && (
-        <WebCamVideo camera={devices[displaySelected]} webcamRef={webcamRef} />
+        <WebCamVideo
+          camera={devices[displaySelected]}
+          webcamRef={webcamRef}
+          index={index}
+        />
       )}
     </>
   );
 };
 
-const WebCamVideo = ({ camera, webcamRef }) => {
+const WebCamVideo = ({ camera, webcamRef, index }) => {
   return (
     <>
       {camera && (
@@ -36,6 +39,7 @@ const WebCamVideo = ({ camera, webcamRef }) => {
             ref={webcamRef}
             videoConstraints={{ deviceId: camera.deviceId }}
           />
+          
         </>
       )}
     </>
