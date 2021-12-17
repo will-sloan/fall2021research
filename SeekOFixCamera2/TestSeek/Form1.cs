@@ -124,12 +124,12 @@ namespace TestSeek
             rbUnitsC.CheckedChanged += new EventHandler(radioButtons_CheckedChanged);
             rbUnitsF.CheckedChanged += new EventHandler(radioButtons_CheckedChanged);
 
-            var camera1 = "WinUSBEnumeratedDevice(\\\\?\\usb#vid_289d&pid_0010&mi_00#9&367621c8&0&0000#{408d086f-286a-471e-98ba-b4ddad5ffb2d},408d086f-286a-471e-98ba-b4ddad5ffb2d)";
-            var camera2 = "WinUSBEnumeratedDevice(\\\\?\\usb#vid_289d&pid_0010&mi_00#9&23bc7123&0&0000#{408d086f-286a-471e-98ba-b4ddad5ffb2d},408d086f-286a-471e-98ba-b4ddad5ffb2d)";
+            var camera1 = "WinUSBEnumeratedDevice(\\\\?\\usb#vid_289d&pid_0010&mi_00#6&1a6a2cff&0&0000#{e17fc095-5d15-46bb-ac1b-bb46d4a646f1},e17fc095-5d15-46bb-ac1b-bb46d4a646f1)";
+            var camera2 = "WinUSBEnumeratedDevice(\\\\?\\usb#vid_289d&pid_0010&mi_00#6&1a6a2cff&0&0000#{e17fc095-5d15-46bb-ac1b-bb46d4a646f1},e17fc095-5d15-46bb-ac1b-bb46d4a646f1)";
             winusbdotnet.WinUSBEnumeratedDevice device = null;
             foreach (winusbdotnet.WinUSBEnumeratedDevice d in SeekThermal.Enumerate())
             {
-                //System.Diagnostics.Debug.WriteLine("DEVICE: " + d.ToString());
+                System.Diagnostics.Debug.WriteLine("DEVICE: " + d.ToString());
 
                 // We want to find the first camera
                 //if (d.ToString().Equals(camera1))
@@ -147,7 +147,7 @@ namespace TestSeek
             //var device = SeekThermal.Enumerate().FirstOrDefault();
 
 
-
+            Debug.WriteLine("Checkpoint 0");
             if (device == null)
             {
                 MessageBox.Show("No Seek Thermal devices found.");
@@ -156,11 +156,14 @@ namespace TestSeek
 
             // Create the thermal camera
             thermal = new SeekThermal(device);
+            Debug.WriteLine("Checkpoint 1");
 
             // Start a process to handle the camera, so buttons can still be used
             thermalThread = new Thread(ThermalThreadProc);
+            Debug.WriteLine("Checkpoint 2");
             thermalThread.IsBackground = true;
             thermalThread.Start();
+            Debug.WriteLine("Checkpoint 3");
         }
 
         void ThermalThreadProc()
@@ -758,31 +761,7 @@ namespace TestSeek
                 // IMG buffer has the RGB values for each pixel.
                 // This converts the 97344 array into a 32448*3 array for the 208*156 image
 
-                // Clicking `Auto Save` will enable writing output
-                if (autoSaveImg)
-                {
-                    // Name file the unix time stamp 
-                    DateTime foo = DateTime.Now;
-                    long unixTime = ((System.DateTimeOffset)foo).ToUnixTimeSeconds();
-                    string fileName = localPath + @"\export\camera2\seek_c2_" + unixTime.ToString() + ".txt";
-                    //string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
-                    //System.Diagnostics.Debug.WriteLine(unixTime);
-                    using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
-                    {
-                        // 156 --> height
-                        // 208 --> width
-                        // 155 * 208 + 208 = 32448
-                        // Each row is 208 long, so we don't include the last index
-                        for (int i=0; i<156; i++)
-                        {
-                            // Since we want to save a 1D array as a "2D" csv file, we have to take segements of the file equal to the image width
-                            // new ArraySegment<ushort>(array, start_index, number_of_items_including_start)
-                            file.WriteLine(string.Join(",", new ArraySegment<ushort>(arrID3, i * 208, 208)));
-                        }
-                        
-                    }
-                    //willsFlag = false;
-                }
+                
                 
 
                 Marshal.Copy(imgBuffer, 0, bitmap_data.Scan0, imgBuffer.Length);
@@ -804,6 +783,33 @@ namespace TestSeek
                     firstAfterCal = false;
                     pictureBox5.Image = bigBitmap;
                     //if (autoSaveImg) bigBitmap.Save(localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".png");
+                    // Clicking `Auto Save` will enable writing output
+                    if (autoSaveImg)
+                    {
+                        // Name file the unix time stamp 
+                        string start_string = "C:\\Users\\sam3sim\\Documents\\fall2021research-main\\fall2021research-main\\Participant_data\\test_subject_1\\";
+                        DateTime foo = DateTime.Now;
+                        long unixTime = ((System.DateTimeOffset)foo).ToUnixTimeSeconds();
+                        bitmap.Save(start_string + "seek_camera2\\seek_camera2_bitmap_" + unixTime.ToString() + ".png");
+                        string fileName = start_string + "seek_camera2\\seek_camera2_raw_" + unixTime.ToString() + ".txt";
+                        //string fileName = localPath + @"\export\seek_" + DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss_fff") + ".txt";
+                        //System.Diagnostics.Debug.WriteLine(unixTime);
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName))
+                        {
+                            // 156 --> height
+                            // 208 --> width
+                            // 155 * 208 + 208 = 32448
+                            // Each row is 208 long, so we don't include the last index
+                            for (int i = 0; i < 156; i++)
+                            {
+                                // Since we want to save a 1D array as a "2D" csv file, we have to take segements of the file equal to the image width
+                                // new ArraySegment<ushort>(array, start_index, number_of_items_including_start)
+                                file.WriteLine(string.Join(",", new ArraySegment<ushort>(arrID3, i * 208, 208)));
+                            }
+
+                        }
+                        //willsFlag = false;
+                    }
                 }
 
                 DrawHistogram();

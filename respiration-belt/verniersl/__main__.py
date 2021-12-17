@@ -4,11 +4,13 @@ Command Line Interface
 ----------------------
 """
 from godirect import GoDirect
+import sys
 import pylsl
 import threading
 import time
 import math
 import datetime
+import os
 from pygatt.exceptions import NotConnectedError
 
 
@@ -128,13 +130,14 @@ def device_to_stream(device):
 
 
 class Outlet(threading.Thread):
-    def __init__(self, device, enable: list = ["default"], filename: str = None):
+    def __init__(self, device, enable: list = ["default"], filename: str = None, directory: str = None):
         threading.Thread.__init__(self)
         self.device = device
         self.enable = enable
         # Make sure there is a filename
         # and check that it is a txt file
         self.filename = None
+        self.directory = directory
         print("HERE 1")
         if filename:
             if filename.endswith(".txt"):
@@ -145,6 +148,8 @@ class Outlet(threading.Thread):
             cur = datetime.datetime.now()
             self.filename = f"unnamed-{cur.year}-{cur.month}-{cur.day}-{cur.hour}-{cur.minute}-{cur.second}.txt"
         print("SET FILENAME TO: ", filename)
+        # Make sure directory has a backslash at the end
+        
 
     def run(self):
         self.is_running = True
@@ -178,7 +183,7 @@ class Outlet(threading.Thread):
                 # )
             return t1
 
-        with open(self.filename, "a") as f:
+        with open(self.directory + self.filename, "a") as f:
             while self.is_running:  # publish
                 time.sleep(0.001)
                 if device.read():
@@ -197,6 +202,7 @@ class Outlet(threading.Thread):
                     output = f"{int(time.time())}, {chunk[0]}, {chunk[1]}\n"
                     # Old version of a normal time stamp
                     # output = f"{datetime.datetime.now()}, {chunk[0]}, {chunk[1]}\n"
+                    # print(output)
                     f.write(output)
 
                     # print()
@@ -238,8 +244,14 @@ def start_godirect(mode: str):
 
 def main():
     def do_quit():
-        godirect.quit()
-        quit()
+        print("START OF DO_QUIT")
+        # godirect.quit()
+        # quit()
+        # print("INSIDE DO QUIT")
+        # sys.exit("END OF DO_QUIT")
+        os._exit(0)
+        print("AFTER OS EXIT")
+
 
     import argparse
 
@@ -277,16 +289,42 @@ def main():
                         and connected over "usb", "ble" or "any". Defaults to
                         "usb"''',
     )
+
     parser.add_argument(
-        "--filename",
+            "--filename",
+            type=str,
+            help='Name of the file to write to',
+        )
+
+    # parser.add_argument(
+    #     "--directory",
+    #     type=str,
+    #     help='Name of the directory to keep the files in.',
+    # )
+
+    parser.add_argument(
+        "--folder",
         type=str,
-        help='Name of the file to write to',
+        help='Name of the folder to keep the files in.',
     )
     args = parser.parse_args()
     print(args)
     enable = args.enable.replace("[", "").replace("]", "").split(",")
-    #
+    if args.folder == None:
+        sys.exit("Need folder parameter")
+    directory = "C:\\Users\\sam3sim\\Documents\\fall2021research-main\\fall2021research-main\\Participant_data\\" + args.folder
+    # directory = args.Directory
+    # if directory == None:
+    #     directory = "C:\\Users\\sam3sim\\Documents\\fall2021research-main\\fall2021research-main\\Participant_data\\"
+    # if not directory.endswith("\\"):
+    #     directory += "\\"
+    import pathlib
+    pathlib.Path(directory).mkdir(parents=True, exist_ok=True) 
 
+    seek_folder_1 = "C:\\Users\\sam3sim\\Documents\\fall2021research-main\\fall2021research-main\\Participant_data\\test_subject_1\\seek_camera1\\"
+    seek_folder_2 = "C:\\Users\\sam3sim\\Documents\\fall2021research-main\\fall2021research-main\\Participant_data\\test_subject_1\\seek_camera2\\"
+    pathlib.Path(seek_folder_1).mkdir(parents=True, exist_ok=True) 
+    pathlib.Path(seek_folder_2).mkdir(parents=True, exist_ok=True) 
     try:
         start_godirect(args.mode.lower())
         if args.scan:
@@ -302,22 +340,26 @@ def main():
                 input(f"Found {len(devices)}, but {args.number} were requested")
             else:
                 for device in devices:
-                    o = Outlet(device=device, enable=enable, filename=args.filename)
+                    o = Outlet(device=device, enable=enable, filename=args.filename, directory=args.directory)
                     print("Created device")
                     o.start()
     except OSError:
         input(f"Connection problem, please replug the USB")
-    except Exception as e:
-        print("HJEHRJHEHRE")
-        print(e)
+    # except KeyboardInterrupt as e:
+    #     print("KEYBORAD INTERRUPT")
+    #     print(e)
     except ConnectionError as e:
         parser.print_help()
     finally:
+        # print("WAITING FOR INPUT")
         input("Press return to close....")
+        # print("INSIDE FINALLY")
+        #sys.exit("EXIT PLEASE")
         # this is here because if opened on windows, terminals usually close
         # immediatly, preventing the user from reading the output of error
         # messages etc.
         do_quit()
+        print("END OF FINALLY")
 
 
 # %%
